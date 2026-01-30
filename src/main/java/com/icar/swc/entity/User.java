@@ -12,20 +12,25 @@ public class User {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username;   // ✅ FIXED typo
+    private String username;
 
     @Column(nullable = true)
-    private String password;   // null for Google users
+    private String password;   // BCrypt hash
 
     private String role = "USER";
 
     @Column(nullable = false)
     private String provider = "LOCAL"; // LOCAL / GOOGLE
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    /* ===== Getters & Setters ===== */
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 
+    // Getters & setters
     public Long getId() { return id; }
 
     public String getUsername() { return username; }
@@ -41,5 +46,4 @@ public class User {
     public void setProvider(String provider) { this.provider = provider; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
