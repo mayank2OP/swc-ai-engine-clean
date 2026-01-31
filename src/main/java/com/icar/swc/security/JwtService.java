@@ -16,7 +16,7 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    // ✅ LOAD FROM ENV (Railway variable: JWT_SECRET)
+    // ✅ MUST MATCH Railway env: jwt.secret
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -56,7 +56,7 @@ public class JwtService {
     }
 
     /* =====================================================
-       VALIDATE TOKEN (USED BY FILTER)
+       VALIDATE TOKEN
     ===================================================== */
     public boolean isTokenValid(String token) {
         try {
