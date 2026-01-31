@@ -291,7 +291,7 @@
       const data = await res.json();
       localStorage.setItem("token", data.token);
 
-     window.location.href = "/dashboard";
+     window.location.href = "/";
 
     } catch (err) {
       errorBox.textContent = err.message;
