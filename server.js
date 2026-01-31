@@ -67,6 +67,10 @@ app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
 
+app.get("/", (req, res) => {
+  res.render("index"); // MAIN LANDING PAGE
+});
+
 app.post("/login", async (req, res) => {
   try {
     const r = await fetch(`${process.env.SPRING_API_BASE}/auth/login`, {
