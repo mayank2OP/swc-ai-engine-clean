@@ -12,6 +12,12 @@
       box-sizing: border-box;
     }
 
+<script>
+  if (localStorage.getItem("token")) {
+    window.location.replace("/");
+  }
+</script>
+
     body {
       font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
       background: #ffffff;
