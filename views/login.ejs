@@ -268,7 +268,6 @@
     e.preventDefault();
     console.log("LOGIN SUBMIT TRIGGERED");
 
-    btn.classList.add("loading");
     btn.disabled = true;
 
     const username = document.getElementById("username").value;
@@ -279,24 +278,41 @@
         "https://swc-ai-engine-clean-production.up.railway.app/auth/login",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({ username, password })
         }
       );
 
-      console.log("BACKEND STATUS:", res.status);
+      console.log("AUTH STATUS:", res.status);
 
-      if (!res.ok) throw new Error("Invalid credentials");
+      const text = await res.text();
+      console.log("RAW RESPONSE:", text);
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error("Login failed");
+      }
+
+      const data = JSON.parse(text);
+
+      if (!data.token) {
+        throw new Error("Token missing in response");
+      }
+
+      console.log("TOKEN RECEIVED:", data.token);
+
       localStorage.setItem("token", data.token);
 
-     window.location.href = "/";
+      console.log("TOKEN SAVED TO LOCALSTORAGE");
+
+      // ✅ Redirect ONLY after token is saved
+      window.location.href = "/";
 
     } catch (err) {
+      console.error(err);
       errorBox.textContent = err.message;
       errorBox.style.display = "block";
-      btn.classList.remove("loading");
       btn.disabled = false;
     }
   });
