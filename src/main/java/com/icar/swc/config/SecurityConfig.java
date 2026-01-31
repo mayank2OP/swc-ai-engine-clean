@@ -1,11 +1,11 @@
 package com.icar.swc.config;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,9 +26,9 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserRepository userRepository;
 
-    // 🔴 CHANGE THIS TO YOUR VERCEL URL
-    private static final String FRONTEND_URL =
-            "https://swc-ai-engine-clean.vercel.app";
+    // ✅ Loaded from Railway ENV: frontend.url
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     public SecurityConfig(
             JwtService jwtService,
@@ -44,54 +44,51 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ STATELESS (JWT)
+            // ================= JWT / STATELESS =================
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ ROUTE RULES
+            // ================= ROUTE SECURITY =================
             .authorizeHttpRequests(auth -> auth
+
                 // PUBLIC ROUTES
                 .requestMatchers(
                     "/",
-                    "/login",
-                    "/register",
                     "/auth/**",
                     "/oauth2/**",
                     "/login/oauth2/**",
                     "/error"
                 ).permitAll()
 
-                // PUBLIC APIs (your choice)
-                .requestMatchers("/api/**").permitAll()
-
-                // EVERYTHING ELSE PROTECTED
+                // EVERYTHING ELSE REQUIRES JWT
                 .anyRequest().authenticated()
             )
 
-            // ✅ GOOGLE LOGIN
-            .oauth2Login(oauth2 -> oauth2
-                .successHandler(this::googleSuccessHandler)
+            // ================= GOOGLE OAUTH =================
+            .oauth2Login(oauth2 ->
+                oauth2.successHandler(this::googleSuccessHandler)
             )
 
-            // ✅ JWT FILTER (must be AFTER permit rules)
+            // ================= JWT FILTER =================
             .addFilterBefore(
                 jwtAuthFilter,
                 UsernamePasswordAuthenticationFilter.class
             )
 
-            // ✅ LOGOUT
+            // ================= LOGOUT =================
             .logout(logout -> logout
-                .logoutSuccessUrl(FRONTEND_URL + "/login")
+                .logoutSuccessUrl(frontendUrl + "/login")
                 .permitAll()
             );
 
         return http.build();
     }
 
-    // ================= GOOGLE SUCCESS HANDLER =================
-
+    // ======================================================
+    // GOOGLE OAUTH SUCCESS HANDLER
+    // ======================================================
     private void googleSuccessHandler(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -103,21 +100,21 @@ public class SecurityConfig {
 
         String email = oauthUser.getAttribute("email");
 
-       User user = userRepository.findByUsername(email)
-    .orElseGet(() -> {
-        User u = new User();
-        u.setUsername(email);
-        u.setPassword(null);
-        u.setProvider("GOOGLE");
-        u.setRole("USER");
-        return userRepository.save(u); // createdAt set automatically
-    });
+        User user = userRepository.findByUsername(email)
+            .orElseGet(() -> {
+                User u = new User();
+                u.setUsername(email);
+                u.setPassword("OAUTH2_USER"); // ✅ avoid null issues
+                u.setProvider("GOOGLE");
+                u.setRole("USER");
+                return userRepository.save(u);
+            });
 
         String token = jwtService.generateToken(user.getUsername());
 
-        // ✅ REDIRECT BACK TO FRONTEND WITH JWT
+        // ✅ Redirect back to frontend with JWT
         response.sendRedirect(
-            FRONTEND_URL + "/oauth-success?token=" + token
+            frontendUrl + "/oauth-success?token=" + token
         );
     }
 }
