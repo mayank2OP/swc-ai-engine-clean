@@ -103,16 +103,15 @@ public class SecurityConfig {
 
         String email = oauthUser.getAttribute("email");
 
-        User user = userRepository.findByUsername(email)
-            .orElseGet(() -> {
-                User u = new User();
-                u.setUsername(email);
-                u.setPassword(null);
-                u.setProvider("GOOGLE");
-                u.setRole("USER");
-                u.setCreatedAt(LocalDateTime.now());
-                return userRepository.save(u);
-            });
+       User user = userRepository.findByUsername(email)
+    .orElseGet(() -> {
+        User u = new User();
+        u.setUsername(email);
+        u.setPassword(null);
+        u.setProvider("GOOGLE");
+        u.setRole("USER");
+        return userRepository.save(u); // createdAt set automatically
+    });
 
         String token = jwtService.generateToken(user.getUsername());
 
