@@ -1,7 +1,7 @@
 package com.icar.swc.security;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,19 +33,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
-    // ✅ VERY IMPORTANT — SKIP PUBLIC ROUTES
+    // ======================================================
+    // SKIP JWT FILTER FOR PUBLIC ROUTES
+    // ======================================================
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+
         String path = request.getServletPath();
 
-        return path.equals("/login")
-            || path.equals("/register")
-            || path.startsWith("/oauth2")
-            || path.startsWith("/login/oauth2")
-            || path.startsWith("/auth")
-            || path.startsWith("/error");
+        return path.equals("/")
+                || path.startsWith("/auth")
+                || path.startsWith("/oauth2")
+                || path.startsWith("/login/oauth2")
+                || path.startsWith("/error");
     }
 
+    // ======================================================
+    // MAIN FILTER LOGIC
+    // ======================================================
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -53,17 +58,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (header == null || !header.startsWith("Bearer ")) {
+        // 🔹 No JWT → continue filter chain
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(7);
+        String token = authHeader.substring(7);
 
         try {
-            // ✅ Validate token
+            // 🔹 Validate token
             if (!jwtService.isTokenValid(token)) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
@@ -72,28 +78,34 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String username = jwtService.extractUsername(token);
 
-            // ✅ Load user from DB
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow();
+            // 🔹 Avoid re-authentication
+            if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // ✅ Attach ROLE_
-            List<SimpleGrantedAuthority> authorities =
-                    List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                User user = userRepository.findByUsername(username)
+                        .orElseThrow();
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                            user.getUsername(),
-                            null,
-                            authorities
-                    );
+                SimpleGrantedAuthority authority =
+                        new SimpleGrantedAuthority("ROLE_" + user.getRole());
 
-            auth.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                user.getUsername(),
+                                null,
+                                Collections.singletonList(authority)
+                        );
 
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
+            }
 
         } catch (Exception e) {
+            // 🔴 Any JWT error → clear context, do NOT crash
             SecurityContextHolder.clearContext();
         }
 
