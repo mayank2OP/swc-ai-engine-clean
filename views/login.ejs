@@ -5,18 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | GeoAgri Conserva</title>
 
+  <!-- ✅ EARLY AUTH CHECK (MUST BE OUTSIDE <style>) -->
+  <script>
+    if (localStorage.getItem("token")) {
+      window.location.replace("/");
+    }
+  </script>
+
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
-<script>
-  if (localStorage.getItem("token")) {
-    window.location.replace("/");
-  }
-</script>
 
     body {
       font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
@@ -143,29 +144,6 @@
       margin-top: 10px;
     }
 
-    button.loading {
-      color: transparent;
-      position: relative;
-    }
-
-    button.loading::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top: 3px solid white;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     .divider {
       display: flex;
       align-items: center;
@@ -219,110 +197,83 @@
 
 <body>
 
-<div class="card">
-  <div class="header">
-    <div class="logo">
-      <img src="/images/icar-emblem.png"
-           onerror="this.src='https://icar.org.in/sites/default/files/icar_logo_0.png'">
+  <div class="card">
+    <div class="header">
+      <div class="logo">
+        <img src="/images/icar-emblem.png"
+             onerror="this.src='https://icar.org.in/sites/default/files/icar_logo_0.png'">
+      </div>
+      <h2>GeoAgri Conserva</h2>
+      <p class="subtitle">Location-Driven Soil & Water Conservation DSS</p>
     </div>
-    <h2>GeoAgri Conserva</h2>
-    <p class="subtitle">Location-Driven Soil & Water Conservation DSS</p>
+
+    <div class="error" id="errorBox"></div>
+
+    <form id="loginForm">
+      <div class="input-group">
+        <label>Username</label>
+        <input id="username" type="text" required />
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <input id="password" type="password" required />
+      </div>
+
+      <button type="submit" id="loginBtn">Sign In</button>
+
+      <div class="divider"><span>OR</span></div>
+
+      <a class="google-btn"
+         href="https://swc-ai-engine-clean-production.up.railway.app/oauth2/authorization/google">
+        <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
+        Continue with Google
+      </a>
+    </form>
+
+    <div class="link">
+      <p>Don't have an account?</p>
+      <a href="/register">Create new account →</a>
+    </div>
   </div>
 
-  <div class="error" id="errorBox"></div>
+  <script>
+    console.log("LOGIN SCRIPT LOADED");
 
-  <!-- ✅ NO action / NO method -->
-  <form id="loginForm">
-    <div class="input-group">
-      <label>Username</label>
-      <input id="username" type="text" required />
-    </div>
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("loginBtn");
+    const errorBox = document.getElementById("errorBox");
 
-    <div class="input-group">
-      <label>Password</label>
-      <input id="password" type="password" required />
-    </div>
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
 
-    <button type="submit" id="loginBtn">Sign In</button>
+      try {
+        const res = await fetch(
+          "https://swc-ai-engine-clean-production.up.railway.app/auth/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: username.value,
+              password: password.value
+            })
+          }
+        );
 
-    <div class="divider">
-      <span>OR</span>
-    </div>
+        const data = await res.json();
+        if (!res.ok || !data.token) throw new Error("Login failed");
 
-    <!-- ✅ BACKEND GOOGLE OAUTH -->
-    <a class="google-btn"
-       href="https://swc-ai-engine-clean-production.up.railway.app/oauth2/authorization/google">
-      <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
-      Continue with Google
-    </a>
-  </form>
+        localStorage.setItem("token", data.token);
+        window.location.href = "/";
 
-  <div class="link">
-    <p>Don't have an account?</p>
-    <a href="/register">Create new account →</a>
-  </div>
-</div>
-
-<script>
-  console.log("LOGIN SCRIPT LOADED");
-
-  const form = document.getElementById("loginForm");
-  const btn = document.getElementById("loginBtn");
-  const errorBox = document.getElementById("errorBox");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    console.log("LOGIN SUBMIT TRIGGERED");
-
-    btn.disabled = true;
-
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
-    try {
-      const res = await fetch(
-        "https://swc-ai-engine-clean-production.up.railway.app/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ username, password })
-        }
-      );
-
-      console.log("AUTH STATUS:", res.status);
-
-      const text = await res.text();
-      console.log("RAW RESPONSE:", text);
-
-      if (!res.ok) {
-        throw new Error("Login failed");
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.style.display = "block";
+        btn.disabled = false;
       }
-
-      const data = JSON.parse(text);
-
-      if (!data.token) {
-        throw new Error("Token missing in response");
-      }
-
-      console.log("TOKEN RECEIVED:", data.token);
-
-      localStorage.setItem("token", data.token);
-
-      console.log("TOKEN SAVED TO LOCALSTORAGE");
-
-      // ✅ Redirect ONLY after token is saved
-      window.location.href = "/";
-
-    } catch (err) {
-      console.error(err);
-      errorBox.textContent = err.message;
-      errorBox.style.display = "block";
-      btn.disabled = false;
-    }
-  });
-</script>
+    });
+  </script>
 
 </body>
 </html>
