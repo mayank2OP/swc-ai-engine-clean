@@ -258,14 +258,16 @@
 </div>
 
 <script>
+  console.log("LOGIN SCRIPT LOADED");
+
   const form = document.getElementById("loginForm");
   const btn = document.getElementById("loginBtn");
   const errorBox = document.getElementById("errorBox");
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    console.log("LOGIN SUBMIT TRIGGERED");
 
-    errorBox.style.display = "none";
     btn.classList.add("loading");
     btn.disabled = true;
 
@@ -282,14 +284,13 @@
         }
       );
 
+      console.log("BACKEND STATUS:", res.status);
+
       if (!res.ok) throw new Error("Invalid credentials");
 
       const data = await res.json();
-
-      // ✅ STORE JWT
       localStorage.setItem("token", data.token);
 
-      // ✅ REDIRECT TO HOME
       window.location.href = "/";
 
     } catch (err) {
