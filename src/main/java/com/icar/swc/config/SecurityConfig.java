@@ -26,7 +26,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserRepository userRepository;
 
-    // ✅ Loaded from Railway ENV: frontend.url
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -44,16 +43,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ================= JWT / STATELESS =================
+            // ✅ ENABLE CORS
+            .cors(cors -> {})
+
+            // ✅ STATELESS JWT
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ================= ROUTE SECURITY =================
+            // ✅ ROUTES
             .authorizeHttpRequests(auth -> auth
-
-                // PUBLIC ROUTES
                 .requestMatchers(
                     "/",
                     "/auth/**",
@@ -61,34 +61,24 @@ public class SecurityConfig {
                     "/login/oauth2/**",
                     "/error"
                 ).permitAll()
-
-                // EVERYTHING ELSE REQUIRES JWT
                 .anyRequest().authenticated()
             )
 
-            // ================= GOOGLE OAUTH =================
-            .oauth2Login(oauth2 ->
-                oauth2.successHandler(this::googleSuccessHandler)
+            // ✅ GOOGLE OAUTH
+            .oauth2Login(oauth ->
+                oauth.successHandler(this::googleSuccessHandler)
             )
 
-            // ================= JWT FILTER =================
+            // ✅ JWT FILTER
             .addFilterBefore(
                 jwtAuthFilter,
                 UsernamePasswordAuthenticationFilter.class
-            )
-
-            // ================= LOGOUT =================
-            .logout(logout -> logout
-                .logoutSuccessUrl(frontendUrl + "/login")
-                .permitAll()
             );
 
         return http.build();
     }
 
-    // ======================================================
-    // GOOGLE OAUTH SUCCESS HANDLER
-    // ======================================================
+    // ================= GOOGLE SUCCESS HANDLER =================
     private void googleSuccessHandler(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -101,20 +91,19 @@ public class SecurityConfig {
         String email = oauthUser.getAttribute("email");
 
         User user = userRepository.findByUsername(email)
-            .orElseGet(() -> {
-                User u = new User();
-                u.setUsername(email);
-                u.setPassword("OAUTH2_USER"); // ✅ avoid null issues
-                u.setProvider("GOOGLE");
-                u.setRole("USER");
-                return userRepository.save(u);
-            });
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setUsername(email);
+                    u.setPassword("OAUTH2_USER");
+                    u.setRole("USER");
+                    u.setProvider("GOOGLE");
+                    return userRepository.save(u);
+                });
 
         String token = jwtService.generateToken(user.getUsername());
 
-        // ✅ Redirect back to frontend with JWT
         response.sendRedirect(
-            frontendUrl + "/oauth-success?token=" + token
+                frontendUrl + "/oauth-success?token=" + token
         );
     }
 }
