@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -43,17 +44,19 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ ENABLE CORS
+            // ✅ VERY IMPORTANT
             .cors(cors -> {})
 
-            // ✅ STATELESS JWT
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ ROUTES
             .authorizeHttpRequests(auth -> auth
+                // ✅ Allow preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Public routes
                 .requestMatchers(
                     "/",
                     "/auth/**",
@@ -61,15 +64,14 @@ public class SecurityConfig {
                     "/login/oauth2/**",
                     "/error"
                 ).permitAll()
+
                 .anyRequest().authenticated()
             )
 
-            // ✅ GOOGLE OAUTH
             .oauth2Login(oauth ->
                 oauth.successHandler(this::googleSuccessHandler)
             )
 
-            // ✅ JWT FILTER
             .addFilterBefore(
                 jwtAuthFilter,
                 UsernamePasswordAuthenticationFilter.class
