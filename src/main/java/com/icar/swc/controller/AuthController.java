@@ -14,48 +14,65 @@ import com.icar.swc.security.JwtService;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final UserRepository userRepo;
-    private final PasswordEncoder encoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthController(UserRepository userRepo,
-                          PasswordEncoder encoder,
-                          JwtService jwtService) {
-        this.userRepo = userRepo;
-        this.encoder = encoder;
+    public AuthController(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
+    ) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
+    // ======================================================
+    // REGISTER
+    // ======================================================
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest req) {
-        if (userRepo.findByUsername(req.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("User already exists");
+    public ResponseEntity<?> register(@RequestBody AuthRequest request) {
+
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("User already exists");
         }
 
         User user = new User();
-        user.setUsername(req.getUsername());
-        user.setPassword(encoder.encode(req.getPassword()));
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("USER");
+        user.setProvider("LOCAL");
 
-        userRepo.save(user);
-        return ResponseEntity.ok("Registered successfully");
+        userRepository.save(user);
+
+        return ResponseEntity.ok("User registered successfully");
     }
 
-   @PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody AuthRequest req) {
+    // ======================================================
+    // LOGIN
+    // ======================================================
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
 
-    User user = userRepo.findByUsername(req.getUsername())
-            .orElseThrow(() ->
-                    new org.springframework.security.authentication.BadCredentialsException(
-                            "Invalid username or password"
-                    )
-            );
+        User user = userRepository
+                .findByUsername(request.getUsername())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
-    if (!encoder.matches(req.getPassword(), user.getPassword())) {
-        throw new org.springframework.security.authentication.BadCredentialsException(
-                "Invalid username or password"
-        );
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )) {
+            return ResponseEntity
+                    .status(401)
+                    .body("Invalid credentials");
+        }
+
+        String token = jwtService.generateToken(user.getUsername());
+
+        return ResponseEntity.ok(new AuthResponse(token));
     }
-
-    String token = jwtService.generateToken(user.getUsername());
-    return ResponseEntity.ok(new AuthResponse(token));
 }
