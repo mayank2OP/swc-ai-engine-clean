@@ -55,6 +55,13 @@ app.get("/", (req, res) => {
   res.redirect("/login");
 });
 
+app.get("/dashboard", (req, res) => {
+  const token = req.headers.cookie || "";
+
+  // Optional: block access if no token
+  res.render("dashboard");
+});
+
 /* ---------- LOGIN ---------- */
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
