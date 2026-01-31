@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | GeoAgri Conserva</title>
 
-  <!-- ✅ EARLY AUTH CHECK (MUST BE OUTSIDE <style>) -->
+  <!-- ✅ Redirect if already logged in -->
   <script>
     if (localStorage.getItem("token")) {
       window.location.replace("/");
@@ -21,11 +21,11 @@
 
     body {
       font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
-      background: #ffffff;
+      background: #f3f4f6;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
       padding: 20px;
     }
 
@@ -37,98 +37,78 @@
       border-radius: 8px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       position: relative;
-      animation: fadeInUp 0.8s ease-out forwards;
     }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(40px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .card::after {
-      content: '';
+    .card::before {
+      content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #10b981, #059669);
-      border-radius: 8px 8px 0 0;
+      inset: 0;
+      background: rgba(255,255,255,0.92);
+      border-radius: 8px;
+    }
+
+    .card > * {
+      position: relative;
+      z-index: 1;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .logo {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 20px;
+      margin-bottom: 30px;
     }
 
     .logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      width: 110px;
+      margin-bottom: 15px;
     }
 
     h2 {
-      color: #1f2937;
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 26px;
+      color: #065f46;
       margin-bottom: 6px;
     }
 
     .subtitle {
-      color: #374151;
       font-size: 14px;
+      color: #374151;
     }
 
     .error {
+      display: none;
       background: #fee2e2;
-      border-left: 4px solid #dc2626;
       color: #991b1b;
       padding: 12px;
       border-radius: 6px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: center;
-      display: none;
+      font-size: 14px;
     }
 
     .input-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 700;
       color: #374151;
-      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
     }
 
     input {
       width: 100%;
       padding: 12px;
-      border: 2px solid #e5e7eb;
       border-radius: 4px;
+      border: 2px solid #e5e7eb;
       font-size: 15px;
     }
 
     input:focus {
       outline: none;
       border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
     button {
@@ -139,42 +119,34 @@
       border: none;
       border-radius: 4px;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 8px;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
 
     .divider {
-      display: flex;
-      align-items: center;
-      margin: 24px 0;
-      color: #9ca3af;
+      margin: 20px 0;
+      text-align: center;
       font-size: 14px;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #e5e7eb;
-    }
-
-    .divider span {
-      margin: 0 12px;
+      color: #6b7280;
     }
 
     .google-btn {
       display: flex;
-      align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 8px;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
       border: 2px solid #e5e7eb;
+      border-radius: 6px;
       text-decoration: none;
-      font-weight: 600;
       color: #374151;
+      font-weight: 600;
     }
 
     .google-btn:hover {
@@ -182,98 +154,98 @@
     }
 
     .link {
+      margin-top: 16px;
       text-align: center;
-      margin-top: 20px;
       font-size: 14px;
     }
 
     .link a {
       color: #059669;
-      text-decoration: none;
       font-weight: 600;
+      text-decoration: none;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card">
-    <div class="header">
-      <div class="logo">
-        <img src="/images/icar-emblem.png"
-             onerror="this.src='https://icar.org.in/sites/default/files/icar_logo_0.png'">
-      </div>
-      <h2>GeoAgri Conserva</h2>
-      <p class="subtitle">Location-Driven Soil & Water Conservation DSS</p>
+<div class="card">
+  <div class="header">
+    <div class="logo">
+      <img src="/images/icar-emblem.png"
+           onerror="this.src='https://icar.org.in/sites/default/files/icar_logo_0.png'">
     </div>
-
-    <div class="error" id="errorBox"></div>
-
-    <form id="loginForm">
-      <div class="input-group">
-        <label>Username</label>
-        <input id="username" type="text" required />
-      </div>
-
-      <div class="input-group">
-        <label>Password</label>
-        <input id="password" type="password" required />
-      </div>
-
-      <button type="submit" id="loginBtn">Sign In</button>
-
-      <div class="divider"><span>OR</span></div>
-
-      <a class="google-btn"
-         href="https://swc-ai-engine-clean-production.up.railway.app/oauth2/authorization/google">
-        <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
-        Continue with Google
-      </a>
-    </form>
-
-    <div class="link">
-      <p>Don't have an account?</p>
-      <a href="/register">Create new account →</a>
-    </div>
+    <h2>GeoAgri Conserva</h2>
+    <p class="subtitle">Location-Driven Soil & Water Conservation DSS</p>
   </div>
 
-  <script>
-    console.log("LOGIN SCRIPT LOADED");
+  <div class="error" id="errorBox"></div>
 
-    const form = document.getElementById("loginForm");
-    const btn = document.getElementById("loginBtn");
-    const errorBox = document.getElementById("errorBox");
+  <form id="loginForm">
+    <div class="input-group">
+      <label>Username</label>
+      <input id="username" required />
+    </div>
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      btn.disabled = true;
+    <div class="input-group">
+      <label>Password</label>
+      <input id="password" type="password" required />
+    </div>
 
-      try {
-        const res = await fetch(
-          "https://swc-ai-engine-clean-production.up.railway.app/auth/login",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              username: username.value,
-              password: password.value
-            })
-          }
-        );
+    <button id="loginBtn">Sign In</button>
 
-        const data = await res.json();
-        if (!res.ok || !data.token) throw new Error("Login failed");
+    <div class="divider">OR</div>
 
-        localStorage.setItem("token", data.token);
-        window.location.href = "/";
+    <a class="google-btn"
+       href="https://swc-ai-engine-clean-production.up.railway.app/oauth2/authorization/google">
+      <img src="https://developers.google.com/identity/images/g-logo.png" width="20">
+      Continue with Google
+    </a>
+  </form>
 
-      } catch (err) {
-        errorBox.textContent = err.message;
-        errorBox.style.display = "block";
-        btn.disabled = false;
-      }
-    });
-  </script>
+  <div class="link">
+    Don’t have an account?
+    <a href="/register">Create one →</a>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("loginForm");
+  const btn = document.getElementById("loginBtn");
+  const errorBox = document.getElementById("errorBox");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    errorBox.style.display = "none";
+
+    const username = username.value;
+    const password = password.value;
+
+    try {
+      const res = await fetch(
+        "https://swc-ai-engine-clean-production.up.railway.app/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        }
+      );
+
+      if (!res.ok) throw new Error("Invalid credentials");
+
+      const { token } = await res.json();
+      localStorage.setItem("token", token);
+
+      window.location.replace("/");
+
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = "block";
+      btn.disabled = false;
+    }
+  });
+</script>
 
 </body>
 </html>
