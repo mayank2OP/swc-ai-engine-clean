@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | GeoAgri Conserva</title>
 
-  <!-- ✅ Redirect if already logged in -->
+  <!-- Redirect if already logged in -->
   <script>
     if (localStorage.getItem("token")) {
       window.location.replace("/");
@@ -20,7 +20,7 @@
     }
 
     body {
-      font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Source Sans Pro', Arial, sans-serif;
       background: #f3f4f6;
       min-height: 100vh;
       display: flex;
@@ -30,15 +30,13 @@
     }
 
     .card {
-      background-image: url('/images/login_background.jpg');
-      background-size: cover;
-      background-position: center;
-      padding: 40px;
-      border-radius: 8px;
+      background: url('/images/login_background.jpg') center / cover no-repeat;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      padding: 40px;
+      border-radius: 8px;
       position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
 
     .card::before {
@@ -67,7 +65,6 @@
     h2 {
       font-size: 26px;
       color: #065f46;
-      margin-bottom: 6px;
     }
 
     .subtitle {
@@ -94,8 +91,8 @@
       font-size: 12px;
       font-weight: 700;
       color: #374151;
-      margin-bottom: 6px;
       display: block;
+      margin-bottom: 6px;
     }
 
     input {
@@ -132,8 +129,8 @@
     .divider {
       margin: 20px 0;
       text-align: center;
-      font-size: 14px;
       color: #6b7280;
+      font-size: 14px;
     }
 
     .google-btn {
@@ -214,13 +211,17 @@
   const btn = document.getElementById("loginBtn");
   const errorBox = document.getElementById("errorBox");
 
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     btn.disabled = true;
     errorBox.style.display = "none";
 
-    const username = username.value;
-    const password = password.value;
+    const username = usernameInput.value;
+    const password = passwordInput.value;
 
     try {
       const res = await fetch(
