@@ -40,17 +40,22 @@ public class AuthController {
         return ResponseEntity.ok("Registered successfully");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest req) {
+   @PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody AuthRequest req) {
 
-        User user = userRepo.findByUsername(req.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username"));
+    User user = userRepo.findByUsername(req.getUsername())
+            .orElseThrow(() ->
+                    new org.springframework.security.authentication.BadCredentialsException(
+                            "Invalid username or password"
+                    )
+            );
 
-        if (!encoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        String token = jwtService.generateToken(user.getUsername());
-        return ResponseEntity.ok(new AuthResponse(token));
+    if (!encoder.matches(req.getPassword(), user.getPassword())) {
+        throw new org.springframework.security.authentication.BadCredentialsException(
+                "Invalid username or password"
+        );
     }
+
+    String token = jwtService.generateToken(user.getUsername());
+    return ResponseEntity.ok(new AuthResponse(token));
 }
